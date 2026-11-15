@@ -373,7 +373,7 @@ export function PatientPanel({ sessionId, token, embedded = false }: { sessionId
               {LANGS.map((l) => <option key={l.code} value={l.code}>{l.native}</option>)}
             </select>
             <button type="button" onClick={() => setSettingsOpen(true)} className="inline-flex items-center gap-1 rounded-lg border border-line bg-white px-2 py-1 text-navy" aria-label="Accessibility settings">
-              <Settings2 className="size-[1.2em]" aria-hidden /><span className="hidden sm:inline">Settings</span>
+              <Settings2 className="size-[1.2em]" aria-hidden /><span className="hidden sm:inline">{t.settings}</span>
             </button>
           </div>
         </div>
@@ -386,7 +386,7 @@ export function PatientPanel({ sessionId, token, embedded = false }: { sessionId
               {question.translated_text && !acc.simplified && <p className="text-[0.85em] text-navy-500">“{question.original_text}”</p>}
             </>
           ) : ended ? (
-            <p className="text-[1.5em] font-bold">Session ended</p>
+            <p className="text-[1.5em] font-bold">{t.ended}</p>
           ) : (
             <>
               <p className="text-[1.5em] font-bold">{t.waiting}</p>

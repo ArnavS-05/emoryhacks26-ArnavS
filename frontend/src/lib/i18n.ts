@@ -18,7 +18,8 @@ type UI = Record<
   | 'help' | 'yes' | 'no' | 'unsure' | 'repeat' | 'back' | 'stop' | 'confirm' | 'waiting' | 'waitingSub'
   | 'yourMessage' | 'reviewPrompt' | 'sent' | 'sentSub' | 'whereExactly' | 'howStrong' | 'whatFeel' | 'skip'
   | 'quickNeeds' | 'helpSent' | 'helpSentSub' | 'helpLocal' | 'cancelHelp' | 'startOver' | 'translationUnavailable'
-  | 'clinicianAsks' | 'offline' | 'chooseAnswer' | 'stopped' | 'resume' | 'whereHurts' | 'speaking' | 'other',
+  | 'clinicianAsks' | 'offline' | 'chooseAnswer' | 'stopped' | 'resume' | 'whereHurts' | 'speaking' | 'other'
+  | 'settings' | 'ended' | 'loading',
   string>
 
 export const UI_TEXT: Record<Lang, UI> = {
@@ -31,7 +32,7 @@ export const UI_TEXT: Record<Lang, UI> = {
     helpSentSub: 'Your care team has been alerted.', helpLocal: 'Alarm sounding — staff nearby will hear it.',
     cancelHelp: 'Cancel alarm', startOver: 'Start over', translationUnavailable: 'Translation unavailable — showing original',
     clinicianAsks: 'Your clinician asks', offline: 'Reconnecting…', chooseAnswer: 'Choose your answer',
-    stopped: 'Paused', resume: 'Resume', whereHurts: 'Where does it hurt?', speaking: 'Speaking…', other: 'Something else',
+    stopped: 'Paused', resume: 'Resume', whereHurts: 'Where does it hurt?', speaking: 'Speaking…', other: 'Something else', settings: 'Settings', ended: 'Session ended', loading: 'Loading communication board…',
   },
   es: {
     help: 'Ayuda', yes: 'Sí', no: 'No', unsure: 'No sé', repeat: 'Repetir', back: 'Atrás', stop: 'Parar',
@@ -42,7 +43,7 @@ export const UI_TEXT: Record<Lang, UI> = {
     helpSentSub: 'Se avisó a su equipo de atención.', helpLocal: 'Alarma sonando — el personal cercano la oirá.',
     cancelHelp: 'Cancelar alarma', startOver: 'Empezar de nuevo', translationUnavailable: 'Traducción no disponible — se muestra el original',
     clinicianAsks: 'Su médico pregunta', offline: 'Reconectando…', chooseAnswer: 'Elija su respuesta',
-    stopped: 'En pausa', resume: 'Continuar', whereHurts: '¿Dónde le duele?', speaking: 'Hablando…', other: 'Otra cosa',
+    stopped: 'En pausa', resume: 'Continuar', whereHurts: '¿Dónde le duele?', speaking: 'Hablando…', other: 'Otra cosa', settings: 'Ajustes', ended: 'Sesión terminada', loading: 'Cargando tablero de comunicación…',
   },
   fr: {
     help: 'Aide', yes: 'Oui', no: 'Non', unsure: 'Je ne sais pas', repeat: 'Répéter', back: 'Retour', stop: 'Arrêt',
@@ -53,7 +54,7 @@ export const UI_TEXT: Record<Lang, UI> = {
     helpSentSub: 'Votre équipe a été alertée.', helpLocal: 'Alarme en cours — le personnel proche l’entendra.',
     cancelHelp: 'Arrêter l’alarme', startOver: 'Recommencer', translationUnavailable: 'Traduction indisponible — texte original',
     clinicianAsks: 'Votre soignant demande', offline: 'Reconnexion…', chooseAnswer: 'Choisissez votre réponse',
-    stopped: 'En pause', resume: 'Reprendre', whereHurts: 'Où avez-vous mal ?', speaking: 'Lecture…', other: 'Autre chose',
+    stopped: 'En pause', resume: 'Reprendre', whereHurts: 'Où avez-vous mal ?', speaking: 'Lecture…', other: 'Autre chose', settings: 'Réglages', ended: 'Séance terminée', loading: 'Chargement du tableau de communication…',
   },
   hi: {
     help: 'मदद', yes: 'हाँ', no: 'नहीं', unsure: 'पता नहीं', repeat: 'दोहराएँ', back: 'वापस', stop: 'रुकें',
@@ -64,7 +65,7 @@ export const UI_TEXT: Record<Lang, UI> = {
     helpSentSub: 'आपकी देखभाल टीम को सूचित कर दिया गया है।', helpLocal: 'अलार्म बज रहा है — पास के कर्मचारी सुनेंगे।',
     cancelHelp: 'अलार्म बंद करें', startOver: 'फिर से शुरू करें', translationUnavailable: 'अनुवाद उपलब्ध नहीं — मूल पाठ',
     clinicianAsks: 'आपके डॉक्टर पूछ रहे हैं', offline: 'फिर से जुड़ रहा है…', chooseAnswer: 'अपना उत्तर चुनें',
-    stopped: 'रुका हुआ', resume: 'जारी रखें', whereHurts: 'दर्द कहाँ है?', speaking: 'बोल रहा है…', other: 'कुछ और',
+    stopped: 'रुका हुआ', resume: 'जारी रखें', whereHurts: 'दर्द कहाँ है?', speaking: 'बोल रहा है…', other: 'कुछ और', settings: 'सेटिंग्स', ended: 'सत्र समाप्त', loading: 'संचार बोर्ड लोड हो रहा है…',
   },
   zh: {
     help: '求助', yes: '是', no: '不是', unsure: '不确定', repeat: '重复', back: '返回', stop: '暂停',
@@ -75,7 +76,7 @@ export const UI_TEXT: Record<Lang, UI> = {
     helpSentSub: '已通知您的医护团队。', helpLocal: '警报正在响 — 附近的医护人员会听到。',
     cancelHelp: '关闭警报', startOver: '重新开始', translationUnavailable: '翻译不可用 — 显示原文',
     clinicianAsks: '您的医生问', offline: '正在重新连接…', chooseAnswer: '请选择您的回答',
-    stopped: '已暂停', resume: '继续', whereHurts: '哪里痛？', speaking: '正在朗读…', other: '其他',
+    stopped: '已暂停', resume: '继续', whereHurts: '哪里痛？', speaking: '正在朗读…', other: '其他', settings: '设置', ended: '会话已结束', loading: '正在加载沟通板…',
   },
 }
 
