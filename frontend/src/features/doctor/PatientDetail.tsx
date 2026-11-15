@@ -85,7 +85,7 @@ export function PatientDetail() {
                 const items = verified.filter((c: any) => c.kind === k)
                 return (
                   <div key={k}>
-                    <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide text-navy-500">{k === 'history' ? 'History' : `${k}s`}</h3>
+                    <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide text-navy-500">{({ medication: 'Medications', allergy: 'Allergies', condition: 'Conditions', history: 'History' } as const)[k]}</h3>
                     {items.length === 0 ? <p className="text-sm text-navy-300">None recorded</p> : (
                       <ul className="space-y-1">{items.map((c: any) => (
                         <li key={c.id} className="text-sm"><span className="font-medium">{c.label}</span>{c.detail && <span className="text-navy-500"> — {c.detail}</span>}
