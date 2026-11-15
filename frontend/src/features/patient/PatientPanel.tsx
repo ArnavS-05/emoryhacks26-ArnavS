@@ -17,8 +17,8 @@ import * as C from './composer'
 import { SettingsDrawer } from './SettingsDrawer'
 
 export type Accessibility = {
-  input_mode: 'touch' | 'scan' | 'blink' | 'head' | 'voice' | 'keyboard'
-  scan_interval_ms: number; blink_threshold: number; blink_hold_ms: number; head_sensitivity: number
+  input_mode: 'touch' | 'scan' | 'blink' | 'head' | 'voice' | 'keyboard' | 'dwell'
+  scan_interval_ms: number; blink_threshold: number; blink_hold_ms: number; dwell_ms: number; head_sensitivity: number
   font_scale: number; contrast_mode: 'standard' | 'high'; simplified: boolean; max_choices: number
   reduced_motion: boolean; audio_prompts: boolean; language: string; preferred_categories: string[]
   select_keys: string[]; calibration_version: number
@@ -241,6 +241,40 @@ export function PatientPanel({ sessionId, token, embedded = false }: { sessionId
     onActivate: (id, latency) => log('selection', { response_latency_ms: latency, selection_success: true, context: { item: id } }),
   })
 
+  // ---------- dwell (hover-to-select for head-mouse / eye-tracker / limited-click users) ----------
+  const dwellRef = useRef<{ el: HTMLButtonElement | null; timer?: number; needsMove: boolean; x: number; y: number }>({ el: null, needsMove: false, x: 0, y: 0 })
+  const cancelDwell = () => {
+    const d = dwellRef.current
+    clearTimeout(d.timer)
+    d.el?.classList.remove('dwell-active')
+    d.el = null
+  }
+  const onDwellMove = (e: React.PointerEvent) => {
+    if (mode !== 'dwell' || paused || help) return
+    const d = dwellRef.current
+    if (d.needsMove) {
+      if (Math.hypot(e.clientX - d.x, e.clientY - d.y) < 14) return // require a deliberate move after each selection
+      d.needsMove = false
+    }
+    const btn = (e.target as HTMLElement).closest('button[data-item]') as HTMLButtonElement | null
+    if (btn === d.el) return
+    cancelDwell()
+    if (!btn || btn.disabled) return
+    const ms = acc?.dwell_ms ?? 1000
+    d.el = btn
+    btn.style.setProperty('--dwell', `${ms}ms`)
+    btn.classList.add('dwell-active')
+    d.timer = window.setTimeout(() => {
+      btn.classList.remove('dwell-active')
+      d.el = null
+      d.needsMove = true
+      d.x = e.clientX
+      d.y = e.clientY
+      if (btn.isConnected && !btn.disabled) btn.click()
+    }, ms)
+  }
+  useEffect(() => cancelDwell, [comp.stage, mode]) // eslint-disable-line react-hooks/exhaustive-deps
+
   // ---------- keyboard / switch ----------
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -318,6 +352,8 @@ export function PatientPanel({ sessionId, token, embedded = false }: { sessionId
       className={`relative flex h-full flex-col font-patient ${acc.contrast_mode === 'high' ? 'patient-high-contrast' : 'bg-ice text-navy'} ${acc.reduced_motion ? 'reduce-motion' : ''}`}
       style={{ fontSize: `${acc.font_scale * (embedded ? 15 : 18)}px` }}
       lang={pl}
+      onPointerMove={onDwellMove}
+      onPointerLeave={cancelDwell}
     >
       {/* ---------- TOP: question + status ---------- */}
       <header className="border-b border-line bg-white/70 px-[1.1em] py-[0.8em]">
@@ -433,6 +469,9 @@ export function PatientPanel({ sessionId, token, embedded = false }: { sessionId
             />
           )}
         </div>
+      )}
+      {mode === 'dwell' && (
+        <p className="px-[1.1em] pb-1 text-[0.75em] text-navy-500">Dwell selection: rest the pointer on a choice for {((acc.dwell_ms ?? 1000) / 1000).toFixed(1)} s. Move away to cancel.</p>
       )}
       {mode === 'scan' && (
         <p className="px-[1.1em] pb-1 text-[0.75em] text-navy-500">

@@ -105,7 +105,7 @@ class PatientCreate(BaseModel):
     preferred_language: str = Field(default="en", pattern=LANG_RE)
     communication_abilities: list[str] = Field(default_factory=list)
     accessibility_notes: str = Field(default="", max_length=2000)
-    input_mode: Literal["touch", "scan", "blink", "head", "voice", "keyboard"] = "touch"
+    input_mode: Literal["touch", "scan", "blink", "head", "voice", "keyboard", "dwell"] = "touch"
     medical_history: list[str] = Field(default_factory=list)
     medications: list[str] = Field(default_factory=list)
     allergies: list[str] = Field(default_factory=list)
@@ -119,10 +119,11 @@ class PatientCreate(BaseModel):
 
 
 class AccessibilityUpdate(BaseModel):
-    input_mode: Literal["touch", "scan", "blink", "head", "voice", "keyboard"] | None = None
+    input_mode: Literal["touch", "scan", "blink", "head", "voice", "keyboard", "dwell"] | None = None
     scan_interval_ms: int | None = Field(default=None, ge=400, le=8000)
     blink_threshold: float | None = Field(default=None, ge=0.05, le=0.95)
     blink_hold_ms: int | None = Field(default=None, ge=150, le=2000)
+    dwell_ms: int | None = Field(default=None, ge=300, le=4000)
     head_sensitivity: float | None = Field(default=None, ge=0.05, le=1.0)
     font_scale: float | None = Field(default=None, ge=0.8, le=2.0)
     contrast_mode: Literal["standard", "high"] | None = None

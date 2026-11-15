@@ -10,7 +10,7 @@ def accessibility(a: AccessibilityProfile | None) -> dict:
     if not a:
         return {}
     return {k: getattr(a, k) for k in (
-        "input_mode", "scan_interval_ms", "blink_threshold", "blink_hold_ms", "head_sensitivity", "font_scale",
+        "input_mode", "scan_interval_ms", "blink_threshold", "blink_hold_ms", "dwell_ms", "head_sensitivity", "font_scale",
         "contrast_mode", "simplified", "max_choices", "reduced_motion", "audio_prompts", "language",
         "preferred_categories", "select_keys", "calibration_version", "updated_at")}
 

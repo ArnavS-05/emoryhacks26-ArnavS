@@ -49,10 +49,11 @@ class PatientProfile(Base):
 class AccessibilityProfile(Base):
     __tablename__ = "accessibility_profiles"
     patient_id: Mapped[str] = mapped_column(ForeignKey("patients.id", ondelete="CASCADE"), primary_key=True)
-    input_mode: Mapped[str] = mapped_column(String(20), default="touch")  # touch|scan|blink|head|voice|keyboard
+    input_mode: Mapped[str] = mapped_column(String(20), default="touch")  # touch|scan|blink|head|voice|keyboard|dwell
     scan_interval_ms: Mapped[int] = mapped_column(Integer, default=1500)
     blink_threshold: Mapped[float] = mapped_column(Float, default=0.5)
     blink_hold_ms: Mapped[int] = mapped_column(Integer, default=400)
+    dwell_ms: Mapped[int] = mapped_column(Integer, default=1000)
     head_sensitivity: Mapped[float] = mapped_column(Float, default=0.5)
     font_scale: Mapped[float] = mapped_column(Float, default=1.0)
     contrast_mode: Mapped[str] = mapped_column(String(20), default="standard")  # standard|high
@@ -185,3 +186,12 @@ class InteractionEvent(Base):
     scan_interval_ms: Mapped[int | None] = mapped_column(Integer, nullable=True)
     calibration_version: Mapped[int] = mapped_column(Integer, default=1)
     context: Mapped[dict] = mapped_column(JSON, default=dict)
+
+
+class PairingToken(Base):
+    """One-time, short-lived device pairing link (only the SHA-256 hash is stored)."""
+    __tablename__ = "pairing_tokens"
+    token_hash: Mapped[str] = mapped_column(String(64), primary_key=True)
+    session_id: Mapped[str] = mapped_column(ForeignKey("care_sessions.id", ondelete="CASCADE"), index=True)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

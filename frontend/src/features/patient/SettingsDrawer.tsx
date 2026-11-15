@@ -11,6 +11,7 @@ const MODES: { v: Accessibility['input_mode']; label: string; desc: string }[] =
   { v: 'scan', label: 'Switch scanning', desc: 'Highlight moves automatically; one switch selects' },
   { v: 'blink', label: 'Blink (camera)', desc: 'Scanning + deliberate long blink selects' },
   { v: 'head', label: 'Head gestures (camera)', desc: 'Turn to move, nod to select' },
+  { v: 'dwell', label: 'Dwell (hover to select)', desc: 'Rest a pointer, head-mouse or eye-tracker on a choice' },
   { v: 'voice', label: 'Residual speech', desc: 'Say short words like “yes” or an option' },
 ]
 
@@ -59,6 +60,8 @@ export function SettingsDrawer({ acc, patientId, token, onChange, onClose }: {
             onCommit={(v) => onChange({ scan_interval_ms: v, bump_calibration: true, reason: 'scan interval' })} />
           <Range label="Blink hold to select" value={acc.blink_hold_ms} min={250} max={1500} step={50} fmt={(v) => `${v} ms`}
             onCommit={(v) => onChange({ blink_hold_ms: v, bump_calibration: true, reason: 'blink hold' })} />
+          <Range label="Dwell time to select" value={acc.dwell_ms ?? 1000} min={300} max={4000} step={100} fmt={(v) => `${(v / 1000).toFixed(1)} s`}
+            onCommit={(v) => onChange({ dwell_ms: v, bump_calibration: true, reason: 'dwell time' })} />
           <Range label="Head-movement sensitivity" value={Math.round(acc.head_sensitivity * 100)} min={5} max={100} step={5} fmt={(v) => `${v}%`}
             onCommit={(v) => onChange({ head_sensitivity: v / 100, bump_calibration: true, reason: 'head sensitivity' })} />
           <Range label="Text size" value={Math.round(acc.font_scale * 100)} min={80} max={200} step={10} fmt={(v) => `${v}%`}

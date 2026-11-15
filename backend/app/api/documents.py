@@ -21,6 +21,17 @@ MAX_BYTES = 10 * 1024 * 1024
 UPLOAD_DIR = ROOT / "backend" / "uploads"
 
 
+def _name_mismatch(on_doc: str, on_record: str) -> str:
+    """Wrong-patient safety check: flag documents whose patient name doesn't match the record."""
+    import re
+    norm = lambda s: {w for w in re.findall(r"[a-z]+", s.lower()) if len(w) > 1 and w not in {"fictional", "synthetic"}}
+    doc_words, rec_words = norm(on_doc or ""), norm(on_record)
+    if not doc_words or doc_words & rec_words:
+        return ""
+    return (f"WRONG-PATIENT CHECK: the name on this document (“{on_doc.strip()}”) does not match this record "
+            f"(“{on_record}”). Do not approve these fields unless you have confirmed the document belongs to this patient.")
+
+
 @router.post("", status_code=201, dependencies=[Depends(rate_limit("upload", 20))])
 async def upload(pid: str, file: UploadFile = File(...), db: Session = Depends(get_db),
                  p: Principal = Depends(require_clinician)):
@@ -54,8 +65,12 @@ async def upload(pid: str, file: UploadFile = File(...), db: Session = Depends(g
                                        source_excerpt=f.source_excerpt[:2000], confidence=f.confidence)
             db.add(c)
             fields.append(c)
-        warnings = result.warnings
+        warnings = list(result.warnings)
         doc_type = result.document_type
+        name_mismatch = _name_mismatch(result.patient_name_on_document, db.get(Patient, pid).name)
+        if name_mismatch:
+            warnings.insert(0, name_mismatch)
+            audit(db, p, "document_name_mismatch", resource=f"document:{doc.id}")
     except gemini_service.GeminiUnavailable as e:
         doc.extraction_status = "failed"
         doc.extraction_engine = "unavailable"

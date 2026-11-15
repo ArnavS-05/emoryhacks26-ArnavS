@@ -46,6 +46,15 @@ async def security_headers(request: Request, call_next):
     resp.headers["Referrer-Policy"] = "no-referrer"
     resp.headers["X-Frame-Options"] = "DENY"
     resp.headers["Permissions-Policy"] = "camera=(self), microphone=(self), geolocation=()"
+    if resp.headers.get("content-type", "").startswith("text/html"):
+        # wasm-unsafe-eval + blob workers are required by MediaPipe's on-device WASM runtime.
+        resp.headers["Content-Security-Policy"] = (
+            "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self' blob:; "
+            "style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob:; font-src 'self'; "
+            "connect-src 'self' ws: wss: https://storage.googleapis.com https://cdn.jsdelivr.net; "
+            "frame-ancestors 'none'; base-uri 'none'; form-action 'self'")
+    if request.url.path.startswith("/api/"):
+        resp.headers["Cache-Control"] = "no-store"
     return resp
 
 

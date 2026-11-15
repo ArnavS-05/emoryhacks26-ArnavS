@@ -50,6 +50,32 @@ def patient_join(body: PatientJoin, db: Session = Depends(get_db)):
             "patient": patient_for_patient_view(patient)}
 
 
+class PairIn(BaseModel):
+    token: str = Field(min_length=10, max_length=100)
+
+
+@router.post("/pair", dependencies=[Depends(rate_limit("join", 20))])
+def pair_device(body: PairIn, db: Session = Depends(get_db)):
+    """Exchange a one-time pairing link for a session-scoped patient token. Links are single-use."""
+    import hashlib
+    from datetime import datetime, timezone
+    from ..models import PairingToken
+    pt = db.get(PairingToken, hashlib.sha256(body.token.encode()).hexdigest())
+    now = datetime.now(timezone.utc)
+    exp = pt.expires_at.replace(tzinfo=timezone.utc) if pt and pt.expires_at.tzinfo is None else (pt.expires_at if pt else None)
+    if not pt or pt.used_at is not None or exp < now:
+        raise HTTPException(401, "Pairing link expired or already used — ask your clinician for a new one")
+    s = db.get(CareSession, pt.session_id)
+    if not s or s.status != "active":
+        raise HTTPException(404, "Session is no longer active")
+    pt.used_at = now
+    patient = db.get(Patient, s.patient_id)
+    p = Principal(role="patient", name=patient.name, session_id=s.id, patient_id=patient.id)
+    audit(db, p, "patient_paired", resource=f"session:{s.id}")
+    db.commit()
+    return {"token": issue_token(p), "role": "patient", "session": ser_session(s), "patient": patient_for_patient_view(patient)}
+
+
 @router.get("/me")
 def me(p: Principal = Depends(current_principal)):
     return {"role": p.role, "name": p.name, "session_id": p.session_id, "patient_id": p.patient_id}

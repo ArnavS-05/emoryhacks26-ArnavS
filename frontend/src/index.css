@@ -71,3 +71,13 @@ body {
 .urgent-pulse { animation: pulse-ring 1.4s ease-out infinite; }
 
 .sr-only-focusable:not(:focus) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+
+/* Dwell selection progress (pointer / head-mouse / eye-tracker users). Functional feedback, so it is
+   kept even when reduced motion is on. */
+.dwell-active { position: relative; outline: 5px solid var(--color-amber) !important; outline-offset: 3px; }
+.dwell-active::after {
+  content: ''; position: absolute; left: 0; bottom: 0; height: 8px; border-radius: 0 0 14px 14px;
+  background: var(--color-amber); animation: dwell-fill var(--dwell, 1000ms) linear forwards;
+}
+@keyframes dwell-fill { from { width: 0; } to { width: 100%; } }
+.reduce-motion .dwell-active::after, .dwell-active::after { animation-duration: var(--dwell, 1000ms) !important; }

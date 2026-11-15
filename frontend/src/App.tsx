@@ -8,7 +8,7 @@ import { Benchmark } from './features/analytics/Benchmark'
 import { SearchInspector } from './features/search/SearchInspector'
 import { DemoPage } from './pages/DemoPage'
 import { InspectPage } from './pages/InspectPage'
-import { JoinPage, PatientDevicePage } from './pages/PatientPages'
+import { JoinPage, PairPage, PatientDevicePage } from './pages/PatientPages'
 
 export default function App() {
   return (
@@ -19,6 +19,7 @@ export default function App() {
         <Route path="/inspect" element={<InspectPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/join" element={<JoinPage />} />
+        <Route path="/pair" element={<PairPage />} />
         <Route path="/patient/:sessionId" element={<PatientDevicePage />} />
         <Route path="/clinician" element={<ClinicianLayout />}>
           <Route index element={<Dashboard />} />

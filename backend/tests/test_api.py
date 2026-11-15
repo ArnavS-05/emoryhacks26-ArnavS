@@ -165,3 +165,22 @@ def test_demo_start(client):
     d = client.post("/api/demo/start").json()
     assert d["session"]["is_demo"] and d["patient"]["name"] == "Elena Marsh"
     assert "context" not in d["patient"]
+
+
+# Ported from the Node prototype: single-use device pairing links
+def test_pairing_link_is_single_use(client, clinician, patient_session):
+    sid = patient_session["session"]["id"]
+    link = client.post(f"/api/sessions/{sid}/pair", headers=clinician).json()
+    token = link["path"].split("#", 1)[1]
+    first = client.post("/api/auth/pair", json={"token": token})
+    assert first.status_code == 200 and first.json()["session"]["id"] == sid
+    assert client.post("/api/auth/pair", json={"token": token}).status_code == 401
+    assert client.post("/api/auth/pair", json={"token": "x" * 20}).status_code == 401
+    assert client.post(f"/api/sessions/{sid}/pair", headers=patient_session["patient_headers"]).status_code == 403
+
+
+def test_dwell_mode_setting(client, patient_session):
+    pid = patient_session["patient"]["id"]
+    r = client.patch(f"/api/patients/{pid}/accessibility", headers=patient_session["patient_headers"],
+                     json={"input_mode": "dwell", "dwell_ms": 1200})
+    assert r.status_code == 200 and r.json()["input_mode"] == "dwell" and r.json()["dwell_ms"] == 1200

@@ -19,11 +19,11 @@ class Settings(BaseSettings):
 
     gemini_api_key: str = ""
     gemini_live_model: str = "gemini-3.8-live"
-    gemini_text_model: str = "gemini-3.8-flash"
+    gemini_text_model: str = "gemini-3.5-flash"
     gemini_embedding_model: str = "gemini-embedding-001"
     # Low-latency model for real-time question interpretation/translation; fallbacks tried in order.
     gemini_fast_model: str = "gemini-3.1-flash-lite"
-    gemini_fallback_models: str = "gemini-3.5-flash,gemini-3.1-flash-lite"
+    gemini_fallback_models: str = "gemini-3.1-flash-lite"
 
     typesense_host: str = ""
     typesense_port: int = 443

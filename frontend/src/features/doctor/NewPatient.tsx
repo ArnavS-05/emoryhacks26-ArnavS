@@ -51,7 +51,7 @@ export function NewPatient() {
         </fieldset>
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
           <Field label="Starting input method" hint="Can be changed and calibrated by the patient or caregiver at any time."><select className={inputCls} value={f.input_mode} onChange={set('input_mode')}>
-            <option value="touch">Touch</option><option value="keyboard">Keyboard</option><option value="scan">Switch scanning</option><option value="blink">Blink (camera)</option><option value="head">Head gestures (camera)</option><option value="voice">Residual speech</option>
+            <option value="touch">Touch</option><option value="keyboard">Keyboard</option><option value="scan">Switch scanning</option><option value="blink">Blink (camera)</option><option value="head">Head gestures (camera)</option><option value="voice">Residual speech</option><option value="dwell">Dwell (hover to select)</option>
           </select></Field>
           <Field label="Accessibility notes"><textarea className={inputCls} rows={2} value={f.accessibility_notes} onChange={set('accessibility_notes')} /></Field>
         </div>

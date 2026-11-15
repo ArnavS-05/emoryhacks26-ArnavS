@@ -227,6 +227,23 @@ async def request_help(sid: str, body: HelpIn, db: Session = Depends(get_db), p:
     return payload
 
 
+@router.post("/{sid}/pair", dependencies=[Depends(rate_limit("pair", 20))])
+def pair_link(sid: str, db: Session = Depends(get_db), p: Principal = Depends(require_clinician)):
+    """Issue a single-use pairing link (valid 10 minutes) for a separate patient device."""
+    import hashlib
+    from datetime import timedelta
+    from ..models import PairingToken
+    s = _session(db, sid, p)
+    if s.status != "active":
+        raise HTTPException(409, "Session has ended")
+    raw = secrets.token_urlsafe(24)
+    expires = datetime.now(timezone.utc) + timedelta(minutes=10)
+    db.add(PairingToken(token_hash=hashlib.sha256(raw.encode()).hexdigest(), session_id=sid, expires_at=expires))
+    audit(db, p, "pairing_link_issued", resource=f"session:{sid}")
+    db.commit()
+    return {"path": f"/pair#{raw}", "expires_at": expires, "join_code": s.join_code}
+
+
 @router.post("/{sid}/end")
 async def end_session(sid: str, db: Session = Depends(get_db), p: Principal = Depends(require_clinician)):
     s = _session(db, sid, p)

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import { AlertTriangle, Bot, CheckCircle2, ClipboardList, FileText, Mic, MicOff, Search, Send, Square, Stethoscope, Volume2 } from 'lucide-react'
+import QRCode from 'qrcode'
+import { AlertTriangle, Bot, QrCode, CheckCircle2, ClipboardList, FileText, Mic, MicOff, Search, Send, Square, Stethoscope, Volume2 } from 'lucide-react'
 import { api } from '../../lib/api'
 import { LANGS } from '../../lib/i18n'
 import { chime, playAlarm, speak } from '../../lib/speech'
@@ -33,6 +34,7 @@ export function ClinicianSession({ sessionId, token, compact = false, onEnded }:
   const [tab, setTab] = useState<'context' | 'copilot' | 'summary'>('context')
   const [listening, setListening] = useState(false)
   const [autoSpeak, setAutoSpeak] = useState(false)
+  const [pair, setPair] = useState<null | { url: string; qr: string; expires: string; code: string }>(null)
   const recRef = useRef<any>(null)
   const feedRef = useRef<HTMLDivElement>(null)
 
@@ -100,6 +102,14 @@ export function ClinicianSession({ sessionId, token, compact = false, onEnded }:
     setListening(true)
   }
 
+  const pairDevice = async () => {
+    try {
+      const r = await api(`/api/sessions/${sessionId}/pair`, { method: 'POST', token })
+      const url = `${location.origin}${r.path}`
+      setPair({ url, qr: await QRCode.toDataURL(url, { margin: 1, width: 240, color: { dark: '#102a43', light: '#ffffff' } }), expires: r.expires_at, code: r.join_code })
+    } catch (e) { setError((e as Error).message) }
+  }
+
   const end = async () => {
     await api(`/api/sessions/${sessionId}/end`, { method: 'POST', token })
     await load()
@@ -131,10 +141,22 @@ export function ClinicianSession({ sessionId, token, compact = false, onEnded }:
         <div className="ml-auto flex items-center gap-2">
           <Badge tone={sock === 'open' ? 'teal' : 'amber'}>{sock === 'open' ? 'Live' : 'Reconnecting'}</Badge>
           <Badge tone={presence.patient > 0 ? 'teal' : 'neutral'}>{presence.patient > 0 ? 'Patient connected' : 'Patient not connected'}</Badge>
+          {s.status === 'active' && <Button size="sm" variant="secondary" onClick={pairDevice}><QrCode className="size-3.5" />Pair device</Button>}
           {s.status === 'active' && <Button size="sm" variant="secondary" onClick={end}><Square className="size-3.5" />End</Button>}
         </div>
       </header>
 
+      {pair && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-navy/50 p-4" role="dialog" aria-modal="true" aria-label="Pair patient device">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-6 text-center">
+            <h2 className="text-lg font-bold">Pair the patient’s device</h2>
+            <p className="mt-1 text-sm text-navy-500">Scan with the patient’s tablet or phone. Single use, expires {fmtTime(pair.expires)}.</p>
+            <img src={pair.qr} alt="QR code for the one-time pairing link" className="mx-auto mt-4 size-60" />
+            <p className="mt-3 text-sm">Or open <span className="font-mono">{location.origin}/join</span> and enter <span className="font-mono text-lg font-bold tracking-widest">{pair.code}</span></p>
+            <Button className="mt-4 w-full" variant="secondary" autoFocus onClick={() => setPair(null)}>Done</Button>
+          </div>
+        </div>
+      )}
       {alert && (
         <div role="alert" className="flex items-center gap-3 bg-urgent px-4 py-3 text-white urgent-pulse">
           <AlertTriangle className="size-6" aria-hidden />

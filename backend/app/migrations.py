@@ -70,10 +70,18 @@ def _m003_continuous_aggregate(conn: Connection) -> None:
         raw.autocommit = prev
 
 
+def _m004_pairing_and_dwell(conn: Connection) -> None:
+    Base.metadata.create_all(conn)  # creates pairing_tokens
+    cols = {c["name"] for c in __import__("sqlalchemy").inspect(conn).get_columns("accessibility_profiles")}
+    if "dwell_ms" not in cols:
+        conn.execute(text("ALTER TABLE accessibility_profiles ADD COLUMN dwell_ms INTEGER DEFAULT 1000"))
+
+
 MIGRATIONS: list[tuple[str, Callable[[Connection], None]]] = [
     ("001_core_schema", _m001_core),
     ("002_timescale_hypertable", _m002_timescale),
     ("003_session_continuous_aggregate", _m003_continuous_aggregate),
+    ("004_pairing_tokens_and_dwell", _m004_pairing_and_dwell),
 ]
 
 

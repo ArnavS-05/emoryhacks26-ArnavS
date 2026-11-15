@@ -71,7 +71,7 @@ def apply_recommendation(pid: str, body: dict, db: Session = Depends(get_db), p:
         raise HTTPException(403, "Not permitted")
     if body.get("confirmed") is not True:
         raise HTTPException(400, "Explicit confirmation required")
-    allowed = {"scan_interval_ms": int, "blink_hold_ms": int, "max_choices": int, "simplified": bool}
+    allowed = {"scan_interval_ms": int, "blink_hold_ms": int, "dwell_ms": int, "max_choices": int, "simplified": bool}
     setting, value = body.get("setting"), body.get("value")
     if setting not in allowed:
         raise HTTPException(422, "Unsupported setting")
