@@ -1,0 +1,6 @@
+{
+  "name": "synaphi", "version": "1.0.0", "private": true, "type": "module",
+  "engines": {"node": ">=22"},
+  "scripts": {"start": "node --env-file-if-exists=.env server/index.js", "test": "node --test test/*.test.js", "setup": "node --env-file-if-exists=.env scripts/setup.js", "verify:live": "node --env-file-if-exists=.env scripts/verify-live.js"},
+  "dependencies": {"pg": "8.16.3"}
+}

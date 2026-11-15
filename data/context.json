@@ -1,0 +1,12 @@
+[
+ {"id":"choice-yes","kind":"choice","title":"Agree or confirm","text":"Yes","verified":true,"source_url":"","reviewed_at":"2026-11-14"},
+ {"id":"choice-no","kind":"choice","title":"Disagree or decline","text":"No","verified":true,"source_url":"","reviewed_at":"2026-11-14"},
+ {"id":"choice-pain","kind":"choice","title":"Report pain or discomfort","text":"I am in pain","verified":true,"source_url":"","reviewed_at":"2026-11-14"},
+ {"id":"choice-water","kind":"choice","title":"Express thirst or request water","text":"I would like water, if it is safe for me","verified":true,"source_url":"","reviewed_at":"2026-11-14"},
+ {"id":"choice-repeat","kind":"choice","title":"Ask for clarification or repetition","text":"Please explain again","verified":true,"source_url":"","reviewed_at":"2026-11-14"},
+ {"id":"choice-help","kind":"choice","title":"Request assistance","text":"I need help","verified":true,"source_url":"","reviewed_at":"2026-11-14"},
+ {"id":"choice-unsure","kind":"choice","title":"Uncertainty or difficulty understanding","text":"I am not sure","verified":true,"source_url":"","reviewed_at":"2026-11-14"},
+ {"id":"choice-time","kind":"choice","title":"Request more time to respond","text":"Please give me more time","verified":true,"source_url":"","reviewed_at":"2026-11-14"},
+ {"id":"context-aphasia","kind":"context","title":"Supporting communication with aphasia","text":"Use short, uncomplicated sentences. Allow time for a response. Support communication with gestures, drawings or writing. Include the person in the conversation.","verified":true,"source_url":"https://www.nidcd.nih.gov/health/aphasia","reviewed_at":"2026-11-14"},
+ {"id":"context-visit","kind":"context","title":"Preparing for a medical conversation","text":"Bring questions and a list of medicines to the appointment. Ask for clarification when instructions are unclear.","verified":true,"source_url":"https://medlineplus.gov/talkingwithyourdoctor.html","reviewed_at":"2026-11-14"}
+]
