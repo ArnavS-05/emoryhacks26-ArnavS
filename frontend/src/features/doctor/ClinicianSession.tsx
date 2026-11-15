@@ -35,6 +35,7 @@ export function ClinicianSession({ sessionId, token, compact = false, onEnded }:
   const [listening, setListening] = useState(false)
   const [autoSpeak, setAutoSpeak] = useState(false)
   const [pair, setPair] = useState<null | { url: string; qr: string; expires: string; code: string }>(null)
+  const livePresence = useRef(false) // WebSocket presence is authoritative over the fetched snapshot
   const recRef = useRef<any>(null)
   const feedRef = useRef<HTMLDivElement>(null)
 
@@ -42,7 +43,7 @@ export function ClinicianSession({ sessionId, token, compact = false, onEnded }:
     setState(s)
     setTurns(s.turns)
     setMessages(s.messages)
-    setPresence(s.presence)
+    if (!livePresence.current) setPresence(s.presence)
   }).catch((e) => setError(e.message))
   useEffect(() => { void load() }, [sessionId, token]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -62,7 +63,7 @@ export function ClinicianSession({ sessionId, token, compact = false, onEnded }:
     }
     if (e.type === 'patient_status') setPatientStage(e.payload.stage)
     if (e.type === 'repeat_request') { setRepeatAsked(true); setTimeout(() => setRepeatAsked(false), 6000) }
-    if (e.type === 'presence') setPresence(e.payload)
+    if (e.type === 'presence') { livePresence.current = true; setPresence(e.payload) }
     if (e.type === 'session_ended') load()
   })
 

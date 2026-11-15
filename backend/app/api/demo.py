@@ -18,6 +18,9 @@ router = APIRouter(prefix="/api/demo", tags=["demo"])
 
 DEMO_PATIENT_ID = "00000000000000000000000000000d01"
 DEMO_CLINICIAN = "Dr. Rivera (demo)"
+DEMO_ACCESS_DEFAULTS = {"input_mode": "scan", "scan_interval_ms": 1200, "language": "en", "simplified": False,
+                        "font_scale": 1.0, "contrast_mode": "standard", "max_choices": 8, "reduced_motion": False,
+                        "audio_prompts": False, "select_keys": [" ", "Enter"]}
 
 SYNTHETIC_PATIENTS = [
     {
@@ -73,6 +76,10 @@ def start_demo(db: Session = Depends(get_db)):
         raise HTTPException(404, "Demo mode disabled")
     ensure_synthetic_patients(db)
     patient = db.get(Patient, DEMO_PATIENT_ID)
+    # Repeatable judge demo: restore the demo patient's documented access profile.
+    a = patient.accessibility
+    for k, v in DEMO_ACCESS_DEFAULTS.items():
+        setattr(a, k, v)
     # Close previous demo sessions so every run starts clean.
     for s in db.scalars(select(CareSession).where(CareSession.is_demo.is_(True), CareSession.status == "active")):
         s.status = "completed"

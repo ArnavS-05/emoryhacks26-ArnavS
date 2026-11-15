@@ -1,0 +1,52 @@
+{
+  "measured_at": "2026-11-14 22:14 Eastern Standard Time",
+  "server": "http://localhost:8001",
+  "question_interpretation_ms (Gemini, server-side)": {
+    "n": 12,
+    "p50": 819,
+    "p95": 1084,
+    "mean": 841.4,
+    "max": 1233
+  },
+  "question_http_roundtrip_ms (interpret+retrieve+translate+persist)": {
+    "n": 12,
+    "p50": 984.3,
+    "p95": 1242.9,
+    "mean": 1030.4,
+    "max": 1392.6
+  },
+  "question_to_patient_device_ms (WebSocket delivery)": {
+    "n": 12,
+    "p50": 984.4,
+    "p95": 1243.0,
+    "mean": 1030.5,
+    "max": 1392.6
+  },
+  "patient_confirm_to_clinician_ms (WebSocket delivery)": {
+    "n": 10,
+    "p50": 197.2,
+    "p95": 287.4,
+    "mean": 216.4,
+    "max": 287.4
+  },
+  "typesense_search_time_ms (server-reported)": {
+    "n": 10,
+    "p50": 15,
+    "p95": 19,
+    "mean": 15.2,
+    "max": 19
+  },
+  "phrase_search_roundtrip_ms (backend->Typesense Cloud->backend)": {
+    "n": 10,
+    "p50": 38.9,
+    "p95": 112.0,
+    "mean": 46.1,
+    "max": 112.0
+  },
+  "interpretation_engines": {
+    "gemini-3.1-flash-lite": 12
+  },
+  "search_engines": [
+    "typesense:hybrid"
+  ]
+}

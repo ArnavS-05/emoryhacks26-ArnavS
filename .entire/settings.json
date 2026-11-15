@@ -3,23 +3,24 @@
   "strategy_options": {
     "push_sessions": false
   },
+  "absolute_git_hook_path": true,
   "telemetry": false,
+  "redaction": {
+    "custom_redactions": {
+      "entire_code": "(?i)entire\\W{0,12}[A-Z0-9]{10}\\b",
+      "env_secret_assignment": "(?i)(GEMINI_API_KEY|TYPESENSE_[A-Z_]*KEY|TIGER_DATABASE_URL|SESSION_SIGNING_SECRET|CLINICIAN_ACCESS_CODE|ENTIRE_ACCESS_CODE)\\s*[=:]\\s*\\S+",
+      "gemini_aq_key": "AQ\\.[A-Za-z0-9_\\-]{20,}",
+      "labelled_api_key": "(?is)api key:.{0,8}?[A-Za-z0-9]{32}",
+      "password_field": "(?i)password:\\s*\\S+",
+      "postgres_url": "postgres(ql)?(\\+\\w+)?://[^\\s:/]+:[^@\\s]+@\\S+"
+    },
+    "betterleaks": {
+      "enabled": true
+    }
+  },
   "checkpoints": {
     "primary": {
       "type": "git-refs"
-    }
-  },
-  "redaction": {
-    "betterleaks": {
-      "enabled": true
-    },
-    "custom_redactions": {
-      "gemini_aq_key": "AQ\\.[A-Za-z0-9_\\-]{20,}",
-      "env_secret_assignment": "(?i)(GEMINI_API_KEY|TYPESENSE_[A-Z_]*KEY|TIGER_DATABASE_URL|SESSION_SIGNING_SECRET|CLINICIAN_ACCESS_CODE|ENTIRE_ACCESS_CODE)\\s*[=:]\\s*\\S+",
-      "labelled_api_key": "(?is)api key:.{0,8}?[A-Za-z0-9]{32}",
-      "password_field": "(?i)password:\\s*\\S+",
-      "entire_code": "(?i)entire\\W{0,12}[A-Z0-9]{10}\\b",
-      "postgres_url": "postgres(ql)?(\\+\\w+)?://[^\\s:/]+:[^@\\s]+@\\S+"
     }
   }
 }
