@@ -43,6 +43,15 @@ SYNONYM_GROUPS = [
 
 _client = None
 
+# Filler words that otherwise dominate short patient/clinician phrases ("my", "is"...).
+STOPWORDS = {"a", "an", "the", "my", "i", "im", "i'm", "me", "is", "are", "am", "it", "its", "do", "does", "you",
+             "your", "to", "of", "in", "on", "and", "or", "be", "have", "has", "any", "feel", "feeling", "very", "so"}
+
+
+def clean_query(q: str) -> str:
+    words = [w for w in re.findall(r"[a-zA-Z']+", q.lower()) if w not in STOPWORDS]
+    return " ".join(words) or q.strip()
+
 
 def configured() -> bool:
     s = get_settings()
@@ -248,7 +257,7 @@ async def search_phrases(q: str, *, intent: str | None = None, categories: list[
 
     params: dict[str, Any] = {
         "collection": PHRASE_COLLECTION,
-        "q": q or "*",
+        "q": clean_query(q) if q.strip() else "*",
         "query_by": "text,synonyms,intent_tags,category",
         "query_by_weights": "4,3,2,1",
         "filter_by": filter_by,
@@ -264,11 +273,11 @@ async def search_phrases(q: str, *, intent: str | None = None, categories: list[
         if STATE["embedding_mode"].startswith("auto:"):
             params["query_by"] += ",embedding"
             params["query_by_weights"] += ",1"
-            params["vector_query"] = "embedding:([], alpha: 0.35, k: 60)"
+            params["vector_query"] = "embedding:([], alpha: 0.6, k: 60)"
         else:
             try:
                 vec = (await gemini_service.embed([q]))[0]
-                params["vector_query"] = f"embedding:([{','.join(f'{x:.6f}' for x in vec)}], k: 60, alpha: 0.35)"
+                params["vector_query"] = f"embedding:([{','.join(f'{x:.6f}' for x in vec)}], k: 60, alpha: 0.6)"
             except Exception:
                 use_vector = False
     if not use_vector:

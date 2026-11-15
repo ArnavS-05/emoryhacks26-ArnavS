@@ -95,50 +95,68 @@ def client():
     return _client
 
 
+_cooldown: dict[str, float] = {}  # model -> monotonic time until which it is skipped
+COOLDOWN_S = 120
+
+
+def model_chain(primary: str | None = None) -> list[str]:
+    """Primary model first, then configured fallbacks; models that recently timed out are skipped."""
+    s = get_settings()
+    chain = [primary or s.gemini_text_model] + [m.strip() for m in s.gemini_fallback_models.split(",") if m.strip()]
+    seen: list[str] = []
+    for m in chain:
+        if m not in seen:
+            seen.append(m)
+    now = time.monotonic()
+    live = [m for m in seen if _cooldown.get(m, 0) <= now]
+    return live or seen[-1:]
+
+
+async def _attempt(schema: type[T], m: str, contents, cfg, timeout: float) -> T:
+    resp = await asyncio.wait_for(client().aio.models.generate_content(model=m, contents=contents, config=cfg), timeout=timeout)
+    parsed = getattr(resp, "parsed", None)
+    if isinstance(parsed, schema):
+        return parsed
+    raw = (resp.text or "").strip()
+    if raw.startswith("```"):
+        raw = raw.strip("`").removeprefix("json").strip()
+    return schema.model_validate(json.loads(raw))
+
+
 async def _structured(op: str, schema: type[T], contents, system: str, timeout: float = 20.0,
                       model: str | None = None, temperature: float = 0.2) -> tuple[T, str]:
     from google.genai import types
 
-    m = model or get_settings().gemini_text_model
-    cfg = types.GenerateContentConfig(
-        system_instruction=system,
-        temperature=temperature,
-        response_mime_type="application/json",
-        response_schema=schema,
-    )
-    t0 = time.perf_counter()
-    last_err: Exception | None = None
-    for attempt in range(2):
-        try:
-            resp = await asyncio.wait_for(
-                client().aio.models.generate_content(model=m, contents=contents, config=cfg), timeout=timeout)
-            parsed = getattr(resp, "parsed", None)
-            if isinstance(parsed, schema):
-                result = parsed
-            else:
-                raw = (resp.text or "").strip()
-                if raw.startswith("```"):
-                    raw = raw.strip("`").removeprefix("json").strip()
-                result = schema.model_validate(json.loads(raw))
-            STATUS.record(op, m, True, int((time.perf_counter() - t0) * 1000))
-            return result, m
-        except (json.JSONDecodeError, ValidationError) as e:
-            last_err = e  # malformed output: retry once
-            continue
-        except asyncio.TimeoutError as e:
-            last_err = TimeoutError(f"Gemini timed out after {timeout}s")
+    cfg = types.GenerateContentConfig(system_instruction=system, temperature=temperature,
+                                      response_mime_type="application/json", response_schema=schema)
+    errors: list[str] = []
+    for m in model_chain(model):
+        t0 = time.perf_counter()
+        for attempt in range(2):
+            try:
+                result = await _attempt(schema, m, contents, cfg, timeout)
+                STATUS.record(op, m, True, int((time.perf_counter() - t0) * 1000))
+                return result, m
+            except (json.JSONDecodeError, ValidationError) as e:
+                err = f"invalid structured output: {type(e).__name__}"
+                if attempt == 0:
+                    continue  # malformed JSON: retry once on the same model
+            except asyncio.TimeoutError:
+                err = f"timed out after {timeout:.0f}s"
+                _cooldown[m] = time.monotonic() + COOLDOWN_S
+            except GeminiUnavailable:
+                raise
+            except Exception as e:  # network, auth, quota, 5xx
+                err = _sanitize(e)
+                if "429" in str(e) and attempt == 0:
+                    await asyncio.sleep(1.5)
+                    continue
+                if any(k in str(e) for k in ("504", "503", "500", "DEADLINE", "UNAVAILABLE", "404")):
+                    _cooldown[m] = time.monotonic() + COOLDOWN_S
+            STATUS.record(op, m, False, int((time.perf_counter() - t0) * 1000), err)
+            errors.append(f"{m}: {err}")
             break
-        except GeminiUnavailable:
-            raise
-        except Exception as e:  # network, auth, quota
-            last_err = e
-            if "429" in str(e) and attempt == 0:
-                await asyncio.sleep(1.5)
-                continue
-            break
-    err = _sanitize(last_err) if last_err else "unknown error"
-    STATUS.record(op, m, False, int((time.perf_counter() - t0) * 1000), err)
-    raise GeminiUnavailable(err)
+    raise GeminiUnavailable("; ".join(errors)[:400] or "no model available")
 
 
 # ---------------- Operations ----------------
@@ -163,7 +181,8 @@ async def classify_question(text: str, clinician_lang: str, patient_lang: str) -
     prompt = (f"Clinician language: {LANG_NAMES.get(clinician_lang, clinician_lang)}\n"
               f"Patient language: {LANG_NAMES.get(patient_lang, patient_lang)}\n"
               f"Clinician said: \"{text}\"")
-    return await _structured("classify_question", QuestionInterpretation, prompt, CLASSIFY_SYSTEM, timeout=12)
+    return await _structured("classify_question", QuestionInterpretation, prompt, CLASSIFY_SYSTEM, timeout=8,
+                             model=get_settings().gemini_fast_model or None)
 
 
 async def translate_batch(texts: list[str], src: str, tgt: str) -> tuple[list[str], str]:
@@ -173,7 +192,8 @@ async def translate_batch(texts: list[str], src: str, tgt: str) -> tuple[list[st
               "soften, or embellish. Return translations in the same order and count.")
     prompt = (f"From {LANG_NAMES.get(src, src)} to {LANG_NAMES.get(tgt, tgt)}:\n" +
               json.dumps(texts, ensure_ascii=False))
-    out, model = await _structured("translate", TranslationBatch, prompt, system, timeout=12, temperature=0)
+    out, model = await _structured("translate", TranslationBatch, prompt, system, timeout=8, temperature=0,
+                                   model=get_settings().gemini_fast_model or None)
     if len(out.translations) != len(texts):
         raise GeminiUnavailable("Translation count mismatch")
     return out.translations, model
@@ -246,13 +266,19 @@ async def verify_models() -> dict[str, str]:
     out: dict[str, str] = {}
     if not configured():
         return {"_": "GEMINI_API_KEY not configured"}
-    try:
-        t0 = time.perf_counter()
-        r = await asyncio.wait_for(client().aio.models.generate_content(
-            model=s.gemini_text_model, contents="Reply with the single word: ready"), timeout=20)
-        out[s.gemini_text_model] = f"ok ({int((time.perf_counter() - t0) * 1000)} ms): {(r.text or '').strip()[:20]}"
-    except Exception as e:
-        out[s.gemini_text_model] = _sanitize(e)
+    text_models = dict.fromkeys([s.gemini_text_model, s.gemini_fast_model,
+                                 *[m.strip() for m in s.gemini_fallback_models.split(",") if m.strip()]])
+    for m in text_models:
+        try:
+            t0 = time.perf_counter()
+            r = await asyncio.wait_for(client().aio.models.generate_content(
+                model=m, contents="Reply with the single word: ready"), timeout=20)
+            out[m] = f"ok ({int((time.perf_counter() - t0) * 1000)} ms): {(r.text or '').strip()[:20]}"
+            _cooldown.pop(m, None)
+        except asyncio.TimeoutError:
+            out[m] = "timed out after 20s"
+        except Exception as e:
+            out[m] = _sanitize(e)
     try:
         await embed(["verification"])
         out[s.gemini_embedding_model] = "ok"
