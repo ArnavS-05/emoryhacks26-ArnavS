@@ -181,7 +181,7 @@ async def classify_question(text: str, clinician_lang: str, patient_lang: str) -
     prompt = (f"Clinician language: {LANG_NAMES.get(clinician_lang, clinician_lang)}\n"
               f"Patient language: {LANG_NAMES.get(patient_lang, patient_lang)}\n"
               f"Clinician said: \"{text}\"")
-    return await _structured("classify_question", QuestionInterpretation, prompt, CLASSIFY_SYSTEM, timeout=8,
+    return await _structured("classify_question", QuestionInterpretation, prompt, CLASSIFY_SYSTEM, timeout=5,
                              model=get_settings().gemini_fast_model or None)
 
 
@@ -258,6 +258,16 @@ async def embed(texts: list[str]) -> list[list[float]]:
         err = _sanitize(e)
         STATUS.record("embed", s.gemini_embedding_model, False, int((time.perf_counter() - t0) * 1000), err)
         raise GeminiUnavailable(err) from e
+
+
+async def warmup() -> None:
+    """Prime the low-latency model at startup so the first clinician question isn't a cold start."""
+    if not configured():
+        return
+    try:
+        await classify_question("Where do you feel pain?", "en", "en")
+    except Exception:
+        pass
 
 
 async def verify_models() -> dict[str, str]:

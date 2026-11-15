@@ -83,6 +83,9 @@ export function PatientPanel({ sessionId, token, embedded = false }: { sessionId
   // ---------- socket ----------
   const { status: sock, send } = useSessionSocket(sessionId, token, (e) => {
     if (e.type === 'question') {
+      // A new question always takes priority: never leave the patient's controls paused behind speech.
+      stopSpeaking()
+      setSpeaking(false)
       setComp(C.onQuestion(C.initialComposer, e.payload))
       setSentText('')
       compStart.current = performance.now()

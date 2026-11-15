@@ -23,7 +23,7 @@ export function speak(text: string, lang = 'en', rate = 0.95): Promise<boolean> 
     u.onerror = () => resolve(false)
     synth.speak(u)
     // Some browsers never fire onend; don't block the UI.
-    setTimeout(() => resolve(true), Math.max(4000, text.length * 120))
+    setTimeout(() => resolve(true), Math.max(2500, text.length * 75))
   })
 }
 

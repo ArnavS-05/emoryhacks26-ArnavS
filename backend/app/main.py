@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -13,7 +14,7 @@ from .api import analytics, auth, demo, documents, patients, search, sessions, s
 from .config import ROOT, get_settings
 from .db import SessionLocal
 from .migrations import run_migrations
-from .services import typesense_service
+from .services import gemini_service, typesense_service
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
 log = logging.getLogger("synaphi")
@@ -28,7 +29,9 @@ async def lifespan(app: FastAPI):
              typesense_service.STATE["embedding_mode"])
     with SessionLocal() as db:
         demo.ensure_synthetic_patients(db)
+    warm = asyncio.create_task(gemini_service.warmup())
     yield
+    warm.cancel()
 
 
 s = get_settings()
@@ -74,8 +77,10 @@ DIST = ROOT / "frontend" / "dist"
 if DIST.exists():
     app.mount("/assets", StaticFiles(directory=DIST / "assets"), name="assets")
 
-    @app.get("/{path:path}", include_in_schema=False)
+    @app.api_route("/{path:path}", methods=["GET", "HEAD"], include_in_schema=False)
     async def spa(path: str):
+        if path.startswith(("api/", "ws/")):
+            return JSONResponse(status_code=404, content={"detail": "Not found"})
         f = (DIST / path).resolve()
         if path and f.is_file() and DIST.resolve() in f.parents:
             return FileResponse(f)

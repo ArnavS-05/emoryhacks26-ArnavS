@@ -1,0 +1,38 @@
+# Production stack: Synaphi app + Caddy (automatic HTTPS via Let's Encrypt).
+# Usage:  DOMAIN=synaphi.example.com docker compose up -d --build
+# No domain yet? Use <server-ip-with-dashes>.sslip.io, e.g. DOMAIN=203-0-113-7.sslip.io
+services:
+  app:
+    build: .
+    env_file: .env
+    environment:
+      APP_ENV: production
+      FRONTEND_ORIGIN: https://${DOMAIN:-localhost}
+      PUBLIC_APP_URL: https://${DOMAIN:-localhost}
+    volumes:
+      - uploads:/app/backend/uploads
+    expose:
+      - "8000"
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      DOMAIN: ${DOMAIN:-localhost}
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      app:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  uploads:
+  caddy_data:
+  caddy_config:
