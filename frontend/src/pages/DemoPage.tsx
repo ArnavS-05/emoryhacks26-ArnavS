@@ -43,17 +43,17 @@ export function DemoPage() {
       <header className="flex flex-wrap items-center gap-3 border-b border-line bg-navy px-4 py-2 text-white">
         <Logo light />
         <span className="rounded-full bg-amber px-2 py-0.5 text-xs font-bold text-navy">Judge mode · fictional data</span>
-        <div className="flex min-w-0 flex-1 items-center gap-2 text-sm" aria-live="polite">
-          <button type="button" aria-label="Previous scene" onClick={() => setScene((s) => Math.max(0, s - 1))} className="rounded p-1 hover:bg-white/10"><ChevronLeft className="size-4" /></button>
-          <span className="shrink-0 font-semibold">Scene {scene + 1}/10 · {SCENES[scene].t}</span>
-          <span className="hidden truncate text-white/80 xl:inline">— {SCENES[scene].d}</span>
-          <button type="button" aria-label="Next scene" onClick={() => setScene((s) => Math.min(9, s + 1))} className="rounded p-1 hover:bg-white/10"><ChevronRight className="size-4" /></button>
+        <div className="order-last flex w-full min-w-0 items-center gap-2 text-sm 2xl:order-none 2xl:w-auto 2xl:flex-1" aria-live="polite">
+          <button type="button" aria-label="Previous scene" onClick={() => setScene((s) => Math.max(0, s - 1))} className="shrink-0 rounded p-1 hover:bg-white/10"><ChevronLeft className="size-4" /></button>
+          <span className="min-w-0 flex-1 whitespace-normal font-semibold">Scene {scene + 1}/10 · {SCENES[scene].t}</span>
+          <span className="hidden min-w-0 flex-1 truncate text-white/80 2xl:inline">— {SCENES[scene].d}</span>
+          <button type="button" aria-label="Next scene" onClick={() => setScene((s) => Math.min(9, s + 1))} className="shrink-0 rounded p-1 hover:bg-white/10"><ChevronRight className="size-4" /></button>
         </div>
         <Link to="/inspect" className="inline-flex items-center gap-1 text-sm text-white/90 underline">Tech inspection<ExternalLink className="size-3" /></Link>
         <Link to="/clinician" className="text-sm text-white/90 underline">Clinician app</Link>
         <Button size="sm" variant="secondary" onClick={start} loading={busy}><RotateCcw className="size-3.5" />Restart</Button>
       </header>
-      <p className="border-b border-line bg-amber-100 px-4 py-1.5 text-sm xl:hidden">{SCENES[scene].d}</p>
+      <p className="border-b border-line bg-amber-100 px-4 py-1.5 text-sm 2xl:hidden">{SCENES[scene].d}</p>
       <ErrorNote error={error} />
       <main className="min-h-0 flex-1">
         {demo ? (
